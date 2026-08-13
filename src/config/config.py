@@ -20,7 +20,7 @@ def load_secret()->dict:
 
 class Config:
     def __init__(self):
-        data = _load_secret()
+        data = load_secret()
 
         # AWS
         self.aws_region: str = data.get("AWS_REGION", "us-east-1")
