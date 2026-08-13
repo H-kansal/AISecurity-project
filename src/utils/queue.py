@@ -1,7 +1,7 @@
 import json
 import uuid
 import redis.asyncio as aioredis
-from app.config import Config
+from src.config.config import Config
 from src.Exception import AIEthicsException
 import sys
 
