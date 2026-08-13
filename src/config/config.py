@@ -8,7 +8,7 @@ from functools import lru_cache
 @lru_cache(maxsize=1)
 def load_secret()->dict:
     region=os.getenv("AWS_REGION")
-    client=boto3.client("secretmanager",region=region)
+    client=boto3.client("secretmanager",region_name=region)
     response=client.get_secret_value(SecretId="research/agent")
     #response is of type
     # {
