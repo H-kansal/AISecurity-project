@@ -9,7 +9,7 @@ import sys
 async def add_job(redis,topic,session_id,output_format,config):
     try:
         job_id=str(uuid.uuid4())
-        await redis.xadd({
+        await redis.xadd(config.stream_key,{
             "job_id": job_id,
             "topic": topic,
             "session_id": session_id,
