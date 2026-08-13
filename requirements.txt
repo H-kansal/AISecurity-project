@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+pydantic
+httpx
+redis[hiredis]
+langgraph
+langchain-core
+sentence-transformers
+numpy
+boto3
+asyncpg
+reportlab
+langsmith
+# -e .
