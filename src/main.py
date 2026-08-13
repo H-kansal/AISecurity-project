@@ -170,7 +170,7 @@ async def start_research(req: RequestClass):
         raise HTTPException(status_code=400, detail=reason)
     session_id = req.session_id or str(uuid.uuid4())
     await set_session(redis_client,config,"user",req.topic,session_id)
-    job_id = await add_job(redis_client,req.topic,req.session_id,req.output_format,config)
+    job_id = await add_job(redis_client,req.topic,session_id,req.output_format,config)
     return {"job_id": job_id, "session_id": session_id}
 
 
