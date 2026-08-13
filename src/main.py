@@ -7,6 +7,7 @@ from src.utils.structuredOutput import AgentState
 import uuid
 import redis.asyncio as aioredis
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
 
 from src.DB.cache import get_cache,set_cache
