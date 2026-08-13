@@ -1,7 +1,7 @@
 from src.Exception import AIEthicsException
 import sys
 from src.config.config import Config
-from fastapi import Request,HTTPException,FastAPI
+from fastapi import Request,HTTPException,FastAPI,Depends
 from contextlib import asynccontextmanager
 from src.utils.structuredOutput import AgentState
 import uuid
@@ -159,7 +159,7 @@ async def health():
 
 
 
-@app.post("/research", dependencies=[Depends(_rate_limit)])
+@app.post("/research", dependencies=[Depends(rate_limit)])
 async def start_research(req: RequestClass):
     ok, reason = await validate_input(config, req.topic)
     if not ok:
