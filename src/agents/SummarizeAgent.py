@@ -2,7 +2,8 @@ from src.Exception import AIEthicsException
 import sys
 from src.config.tz_llm import tz_call
 from src.utils.structuredOutput import AgentState
-
+import logging
+logger = logging.getLogger("SummarizeAgent")
 class SummarizeAgent:
     def __init__(self,config):
         self.config=config
@@ -21,8 +22,10 @@ class SummarizeAgent:
     
     async def summaryNode(self,state:AgentState):
         try:
+            logger.info(f"job_id={state['job_id']} event=summarize_node topic={state['topic'][:50]}")
             result=await self.summaryagent(state["search_result"])
             state["summary"]=[result]
+            logger.info(f"job_id={state['job_id']} event=summarize_node completed topic={state['topic'][:50]}")
             return state
         except Exception as e:
             raise AIEthicsException(e,sys)

@@ -2,8 +2,8 @@ from src.Exception import AIEthicsException
 import sys
 from src.config.tz_llm import tz_call
 from src.utils.structuredOutput import AgentState
-
-
+import logging
+logger = logging.getLogger("WriterAgent")
 class WriterAgent:
     def __init__(self,config):
         self.config=config
@@ -32,9 +32,11 @@ class WriterAgent:
 
     async def writerNode(self,state:AgentState):
         try:
+            logger.info(f"job_id={state['job_id']} event=writer_node topic={state['topic'][:50]}")
             result=await self.writeragent(state["topic"],state.get("summary",[]),state.get("ltm_context",""))
             state["report"]=result
             state["iteration"]=state.get("iteration",0)+1
+            logger.info(f"job_id={state['job_id']} event=writer_node completed topic={state['topic'][:50]}")
             return state
         except Exception as e:
             raise AIEthicsException(e,sys)

@@ -2,7 +2,8 @@ from src.Exception import AIEthicsException
 import sys
 from src.config.tz_llm import tz_call
 from src.utils.structuredOutput import AgentState
-
+import logging
+logger = logging.getLogger("CriticAgent")
 
 class CriticAgent:
     def __init__(self,config):
@@ -25,8 +26,10 @@ class CriticAgent:
     
     async def criticNode(self,state:AgentState):
         try:
+            logger.info(f"job_id={state['job_id']} event=critic_node topic={state['topic'][:50]}")
             result=await self.criticagent(state["report"])
             state["verified"]=result
+            logger.info(f"job_id={state['job_id']} event=critic_node completed topic={state['topic'][:50]}")
             return state
         except Exception as e:
             raise AIEthicsException(e,sys)

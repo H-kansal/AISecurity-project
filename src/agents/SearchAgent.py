@@ -2,6 +2,8 @@ from src.Exception import AIEthicsException
 import sys
 from src.config.tz_llm import tz_call
 from src.utils.structuredOutput import AgentState
+import logging
+logger = logging.getLogger("SearchAgent")
 
 class SearchAgent:
     def __init__(self,config):
@@ -24,8 +26,10 @@ class SearchAgent:
     
     async def searchNode(self,state:AgentState):
         try:
+            logger.info(f"job_id={state['job_id']} event=search_node topic={state['topic'][:50]}")
             result=await self.searchagent(state["topic"],state.get("session_history",[]))
             state["search_result"]=[result]
+            logger.info(f"job_id={state['job_id']} event=search_node completed")
             return state
         except Exception as e:
             raise AIEthicsException(e,sys)

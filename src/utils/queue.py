@@ -15,7 +15,7 @@ async def add_job(redis,topic,session_id,output_format,config):
             "session_id": session_id,
             "output_format": output_format,
         })
-
+        
         return job_id
     except Exception as e:
         raise AIEthicsException(e,sys)
