@@ -119,34 +119,55 @@ async def process_job(data,msg_id):
     finally:
         await ack_job(redis_client,config,msg_id)
 
-async def worker_loop():
-    await ensure_group(redis_client,config)
+async def _worker_loop():
+    logger.info("========== WORKER STARTING ==========")
+    try:
+        await ensure_group(redis_client, config)
+        logger.info("Redis consumer group initialized successfully")
+    except Exception:
+        logger.exception("FAILED TO INITIALIZE REDIS CONSUMER GROUP")
+        raise
+    logger.info("Worker is now waiting for jobs...")
     while True:
         try:
-            jobs=await consume_jobs(redis_client,config)
+            logger.info("Waiting for Redis jobs...")
+            jobs = await consume_jobs(redis_client, config)
+            logger.info(f"Received {len(jobs)} job(s) from Redis")
             for job in jobs:
-                asyncio.create_task(process_job(job['data'],job['msg_id']))  # here we doesn't call await process_job() instead we create a task for it because we want to process multiple jobs at a time and await process_job would block the worker from processing other jobs so we craete a task and let it run in the background
-        except Exception as e:
+                logger.info(
+                    f"Dispatching job: {job['data']['job_id']}, "
+                    f"message_id={job['msg_id']}"
+                )
+                asyncio.create_task(
+                    _process_job(job["data"], job["msg_id"])
+                )
+        except Exception:
+            logger.exception("ERROR INSIDE WORKER LOOP")
             await asyncio.sleep(1)
 
 
 
 @asynccontextmanager
-async def lifespan(app:FastAPI):
-    global redis_client,graph
-    try:
-        redis_client=await aioredis.from_url(config.redis_url,decode_responses=True)
-        await init_pool(config)
-        agent=Agent(config)
-        graph=agent.createGraph()
-        # Start background worker
-        asyncio.create_task(worker_loop())
-        yield
-    finally:
-        # Cleanup
-        if redis_client:
-            await redis_client.close()
-        await close_pool()
+async def lifespan(app: FastAPI):
+    global redis_client, graph
+    logger.info("Application startup started")
+    redis_client = await aioredis.from_url(
+        config.redis_url,
+        decode_responses=True
+    )
+    logger.info("Redis client initialized")
+    await init_pool(config)
+    logger.info("Database pool initialized")
+    await db_migrate(config)
+    logger.info("Database migration completed")
+    graph = build_graph(config)
+    logger.info("Agent graph built")
+    app.state.config = config
+    asyncio.create_task(_worker_loop())
+    logger.info("Worker task created")
+    yield
+    await redis_client.aclose()
+    await close_pool()
 
 
 
