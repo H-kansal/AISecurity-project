@@ -185,6 +185,10 @@ class RequestClass(BaseModel):
     output_format:str
     session_id:str
 
+@app.get("/")
+async def frontend():
+    return FileResponse("index.html")
+
 
 @app.get("/health")
 async def health():

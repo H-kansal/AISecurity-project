@@ -36,12 +36,23 @@ async def get_result(redis,config,job_id):
         raise AIEthicsException(e,sys)
 
 
-async def ensure_group(redis,config):   # this is to make sure that the consumer group is created so that each job is done by only one worker and also if the stream key is not available then it will create it
-    try:
-        await redis.xgroup_create(config.stream_key,config.consumer_group,id="0",mkstream=True)
-    except Exception as e:
-        raise AIEthicsException(e,sys)
 
+async def ensure_group(redis, config):    # this is to make sure that the consumer group is created so that each job is done by only one worker and also if the stream key is not available then it will create it
+    try:
+        await redis.xgroup_create(
+            config.stream_key,
+            config.consumer_group,
+            id="0",
+            mkstream=True
+        )
+        logging.info("Redis consumer group created")
+
+    except Exception as e:
+        if "BUSYGROUP" in str(e):
+            logging.info("Redis consumer group already exists")
+        else:
+            logging.exception("Failed to create Redis consumer group")
+            raise
 
 
 async def consume_jobs(redis,config):
