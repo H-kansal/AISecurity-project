@@ -104,10 +104,9 @@ async def ltm_related_search(config,topic):
                 """
                     SELECT report FROM reports where 1-(embedding <=> $1::vector) BETWEEN 0.5 AND $2 ORDER BY created_at DESC LIMIT 1
                 """,
-                str(embedding),str(config.ltm_threshold-0.01)
+                str(embedding), config.ltm_threshold - 0.01
             )
             return row["report"] if row else None
-
 
     except Exception as e:
         raise AIEthicsException(e,sys)
