@@ -25,6 +25,13 @@ from src.DB.pool import init_pool,close_pool
 from src.agents.agentFlow import Agent
 from src.Evaluation import evalute_report
 
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s] %(levelname)s %(name)s - %(message)s",
+    stream=sys.stdout,
+)
+
 logger = logging.getLogger("worker")
 
 
