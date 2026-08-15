@@ -1,6 +1,8 @@
 import json
 import uuid
 import redis.asyncio as aioredis
+import redis
+import asyncio
 from src.config.config import Config
 from src.Exception import AIEthicsException
 import sys
@@ -63,7 +65,7 @@ async def consume_jobs(redis,config):
             config.consumer_name,
             {config.stream_key: ">"},
             count=1,
-            block=5000,
+            block=1000,
         )              #interpret like this-> Worker consumer_name(worker-1), who belongs to the consumer_group(workers) group, wants the next job from the stream key(research:jobs)
 
         if not messages:
@@ -75,6 +77,8 @@ async def consume_jobs(redis,config):
                 jobs.append({"msg_id":msg_id,"data":data})
 
         return jobs
+    except (redis.exceptions.TimeoutError, asyncio.TimeoutError):
+        return []
     except Exception as e:
         raise AIEthicsException(e,sys)
 
