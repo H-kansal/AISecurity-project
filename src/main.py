@@ -39,7 +39,7 @@ async def rate_limit(request:Request):
         key=f"ratelimit:{client_ip}"
         count=await redis_client.incr(key)
         if count==1:
-            redis_client.expire(key,config.rate_limit_window)
+            await redis_client.expire(key,config.rate_limit_window)
         if count>config.rate_limit_requests:
             raise HTTPException(status_code=429,detail="Rate limit exceeded. Try again later.")
     except Exception as e:
@@ -62,15 +62,15 @@ async def process_job(data,msg_id):
             await ltm_store(config,topic,cache,str(uuid.uuid4()))
         else:
             logger.info(f"job_id={job_id} event=cache_miss")
-            ltm_search_result=ltm_search(config,topic)
+            ltm_search_result=await ltm_search(config,topic)
             if ltm_search_result:     # ltm hit
                 logger.info(f"job_id={job_id} event=ltm_hit")
                 await set_session(redis_client,config,"assistant",ltm_search_result['report'],session_id)
                 await ltm_store(config,topic,ltm_search_result['report'],str(uuid.uuid4()))
             else:
                 logger.info(f"job_id={job_id} event=ltm_miss")
-                session_history=get_session(redis_client,config,session_id)
-                ltm_context=ltm_related_search(config,topic)
+                session_history=await get_session(redis_client,config,session_id)
+                ltm_context=await ltm_related_search(config,topic)
                 logger.info(f"job_id={job_id} event=generating_report")
 
                 state:AgentState={
@@ -89,7 +89,7 @@ async def process_job(data,msg_id):
                 result=await graph.ainvoke(state)
                 logger.info(f"job_id={job_id} event=report_generated")
                 report=result['report']
-                ok,reason=validate_output(config,report)
+                ok,reason=await validate_output(config,report)
                 if not ok:
                     logger.info(f"job_id={job_id} event=report_blocked reason={reason}")
                     await set_result(redis_client,config,job_id,{"status":"blocked","error":reason})
@@ -241,7 +241,7 @@ async def report_diff(topic: str):
 @app.get("/result/{job_id}/pdf")
 async def download_pdf(job_id: str):
     result = await get_result(redis_client,config,job_id)
-    if not result or result.get("status") != "done":
+    if not result or result.get("status") != "completed":
         raise HTTPException(status_code=404, detail="Report not ready")
     pdf_bytes = generate_pdf(result.get("topic", "Report"), result["report"])
     return Response(
