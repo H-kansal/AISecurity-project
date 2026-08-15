@@ -128,6 +128,7 @@ async def process_job(data,msg_id):
     except Exception as e:
         raise AIEthicsException(e,sys)
     finally:
+        logger.info(f"job_id={job_id} event=acknowledging_job")
         await ack_job(redis_client,config,msg_id)
 
 async def _worker_loop():

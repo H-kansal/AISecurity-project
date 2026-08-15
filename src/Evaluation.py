@@ -84,7 +84,7 @@ async def eval_quality(config, topic: str, report: str) -> dict:
 @traceable(run_type="chain", name="evaluate-report")
 async def evalute_report(config,topic,report,job_id):
     try:
-        results=asyncio.gather(
+        results=await asyncio.gather(
             eval_relevance(config,topic,report),
             eval_completeness(config,report),
             eval_hallucination(config,topic,report),
@@ -92,6 +92,7 @@ async def evalute_report(config,topic,report,job_id):
         )
 
         scores={r['key']:r['score'] for r in results}
+
 
         try:
            client=ls()
