@@ -66,12 +66,13 @@ async def ltm_store(config,topic,report,report_id):
         async with pool.acquire() as conn:
             await conn.execute(
                 """
-                INSERT INTO reports(id,topic,report,embedding,created_at) VALUES ($1, $2, $3, $4::vector, $5) ON CONFLICTS (id) DO NOTHING 
+                INSERT INTO reports(id,topic,report,embedding,created_at) VALUES ($1, $2, $3, $4::vector, $5) ON CONFLICT (id) DO NOTHING 
                 """,
                 report_id,topic,report,str(embedding),datetime.utcnow()
             )
     except Exception as e:
         raise AIEthicsException(e,sys)
+
 
 
 async def ltm_search(config,topic):
