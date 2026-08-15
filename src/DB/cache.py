@@ -21,10 +21,10 @@ def embed(text: str) -> list:
 
 async def get_cache(redis,config,query):
     try:
-        embed=embed(query)
+        query_emb=embed(query)
         async for key in redis.scan_iter(f"{EMBEDDING_PREFIX}*"):
             stored_emb=json.loads(await redis.get(key))   # json.loads so that the string is converted to list
-            if cosine_similarity(embed,stored_emb)>=config.cache_similarity_threshold:
+            if cosine_similarity(query_emb,stored_emb)>=config.cache_similarity_threshold:
                 answer_key=key.replace(EMBEDDING_PREFIX,ANSWER_PREFIX)
                 return await redis.get(answer_key)
     except Exception as e:
@@ -35,8 +35,8 @@ async def get_cache(redis,config,query):
 async def set_cache(redis,query,answer,config):
     try:
         queryHash=abs(hash(query))
-        embed=embed(query)
+        query_emb=embed(query)
         await redis.setex(f"{ANSWER_PREFIX}{queryHash}",config.cache_ttl,answer)
-        await redis.setex(f"{EMBEDDING_PREFIX}{queryHash}",config.cache_ttl,json.dumps(embed))   # here while storing in redis we use json.dumps because so that redis can store list as string because redis can't understand list and all
+        await redis.setex(f"{EMBEDDING_PREFIX}{queryHash}",config.cache_ttl,json.dumps(query_emb))   # here while storing in redis we use json.dumps because so that redis can store list as string because redis can't understand list and all
     except Exception as e:
         raise AIEthicsException(e,sys)
