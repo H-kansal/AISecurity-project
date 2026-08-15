@@ -4,6 +4,7 @@ import redis.asyncio as aioredis
 from src.config.config import Config
 from src.Exception import AIEthicsException
 import sys
+import logging
 
 
 async def add_job(redis,topic,session_id,output_format,config):

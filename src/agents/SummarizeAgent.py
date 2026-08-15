@@ -13,7 +13,7 @@ class SummarizeAgent:
             combined_result="\n\n".join(search_results)
             return await tz_call(
                 self.config,
-                f"Summarize these research findings into clear, structured bullet points:\n\n{combined}",
+                f"Summarize these research findings into clear, structured bullet points:\n\n{combined_result}",
                 "research_summarize"
             )
         except Exception as e:

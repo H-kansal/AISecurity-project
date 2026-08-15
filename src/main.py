@@ -1,5 +1,6 @@
 from src.Exception import AIEthicsException
 import sys
+
 from src.config.config import Config
 from fastapi import Request,HTTPException,FastAPI,Depends
 from contextlib import asynccontextmanager
@@ -16,7 +17,7 @@ from fastapi.responses import Response, FileResponse
 import logging
 from src.DB.cache import get_cache,set_cache
 from src.DB.memory import set_session,get_session
-from src.DB.memory import ltm_store,ltm_search,ltm_related_search,ltm_report_diff
+from src.DB.memory import ltm_store,ltm_search,ltm_related_search,ltm_report_diff,ltm_db_configuration
 from src.utils.guardrails import validate_output,validate_input
 from src.utils.queue import ack_job,set_result,ensure_group,consume_jobs,add_job,get_result
 from src.utils.output import generate_pdf,generate_json_report
@@ -54,7 +55,7 @@ async def process_job(data,msg_id):
         job_id=data['job_id']
         logger.info(f"job_id={job_id} event=received msg_id={msg_id} topic={topic[:50]}")
 
-        cache=await get_cache(redis,config,topic)
+        cache=await get_cache(redis_client,config,topic)
         if cache:  # cache hit
             logger.info(f"job_id={job_id} event=cache_hit")
             await set_session(redis_client,config,"assistant",cache,session_id)
@@ -81,7 +82,8 @@ async def process_job(data,msg_id):
                     "summary": [],
                     "report": "",
                     "verified": False,
-                    "iteration": 0
+                    "iteration": 0,
+                    "job_id": job_id
                 }
                  
                 result=await graph.ainvoke(state)
@@ -139,7 +141,7 @@ async def _worker_loop():
                     f"message_id={job['msg_id']}"
                 )
                 asyncio.create_task(
-                    _process_job(job["data"], job["msg_id"])
+                    process_job(job["data"], job["msg_id"])
                 )
         except Exception:
             logger.exception("ERROR INSIDE WORKER LOOP")
@@ -158,9 +160,10 @@ async def lifespan(app: FastAPI):
     logger.info("Redis client initialized")
     await init_pool(config)
     logger.info("Database pool initialized")
-    await db_migrate(config)
+    await ltm_db_configuration(config)
     logger.info("Database migration completed")
-    graph = build_graph(config)
+    agent = Agent(config)
+    graph = agent.createGraph()
     logger.info("Agent graph built")
     app.state.config = config
     asyncio.create_task(_worker_loop())

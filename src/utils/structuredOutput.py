@@ -7,8 +7,9 @@ class AgentState(TypedDict):
     summary:List[str]
     report:str
     iteration:int
-    session_id:int
+    session_id:str
     session_history:List[Dict]
     ltm_context:str
     verified:bool
     error:str
+    job_id:str
