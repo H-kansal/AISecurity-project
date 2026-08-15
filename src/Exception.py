@@ -1,5 +1,4 @@
 import sys
-from src.Logger import logging
 
 
 class AIEthicsException(Exception):

@@ -26,10 +26,12 @@ from src.agents.agentFlow import Agent
 from src.Evaluation import evalute_report
 
 
+
 logging.basicConfig(
     level=logging.INFO,
     format="[%(asctime)s] %(levelname)s %(name)s - %(message)s",
     stream=sys.stdout,
+    force=True,
 )
 
 logger = logging.getLogger("worker")
