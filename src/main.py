@@ -138,6 +138,7 @@ async def _worker_loop():
         raise
     logger.info("Worker is now waiting for jobs...")
     while True:
+        print("=== WORKER LOOP STARTED ===", flush=True)
         try:
             logger.info("Waiting for Redis jobs...")
             jobs = await consume_jobs(redis_client, config)
@@ -159,6 +160,7 @@ async def _worker_loop():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global redis_client, graph
+    print("=== LIFESPAN STARTED ===", flush=True)
     logger.info("Application startup started")
     redis_client = await aioredis.from_url(
         config.redis_url,
