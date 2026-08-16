@@ -6,11 +6,12 @@ routing = ["groq_model", "groq_fallback"]
 
 [models.research_model.providers.groq_model]
 type = "groq"
-model_name = "openai/gpt-oss-120b"
+model_name = "llama-3.3-70b-versatile"
 
 [models.research_model.providers.groq_fallback]
 type = "groq"
-model_name = "openai/gpt-oss-20b"
+model_name = "llama-3.1-8b-instant"
+
 
 [functions.research_summarize]
 type = "chat"
