@@ -69,13 +69,34 @@ async def process_job(data,msg_id):
             logger.info(f"job_id={job_id} event=cache_hit")
             await set_session(redis_client,config,"assistant",cache,session_id)
             await ltm_store(config,topic,cache,str(uuid.uuid4()))
+            
+            result={"status":"completed","topic":topic,"report":cache,"scores":{}}
+            if output_format == "pdf":
+                pdf_bytes = generate_pdf(topic, cache)
+                result["pdf_base64"] = __import__("base64").b64encode(pdf_bytes).decode()
+            elif output_format == "json":
+                result["structured"] = generate_json_report(topic, cache, job_id, datetime.utcnow())
+            
+            await set_result(redis_client,config,job_id,result)
+            logger.info(f"job_id={job_id} event=cache_hit_completed")
         else:
             logger.info(f"job_id={job_id} event=cache_miss")
             ltm_search_result=await ltm_search(config,topic)
             if ltm_search_result:     # ltm hit
                 logger.info(f"job_id={job_id} event=ltm_hit")
-                await set_session(redis_client,config,"assistant",ltm_search_result['report'],session_id)
-                await ltm_store(config,topic,ltm_search_result['report'],str(uuid.uuid4()))
+                report = ltm_search_result['report']
+                await set_session(redis_client,config,"assistant",report,session_id)
+                await ltm_store(config,topic,report,str(uuid.uuid4()))
+                
+                result={"status":"completed","topic":topic,"report":report,"scores":{}}
+                if output_format == "pdf":
+                    pdf_bytes = generate_pdf(topic, report)
+                    result["pdf_base64"] = __import__("base64").b64encode(pdf_bytes).decode()
+                elif output_format == "json":
+                    result["structured"] = generate_json_report(topic, report, job_id, datetime.utcnow())
+                
+                await set_result(redis_client,config,job_id,result)
+                logger.info(f"job_id={job_id} event=ltm_hit_completed")
             else:
                 logger.info(f"job_id={job_id} event=ltm_miss")
                 session_history=await get_session(redis_client,config,session_id)
@@ -124,6 +145,7 @@ async def process_job(data,msg_id):
                 
                 await set_result(redis_client,config,job_id,result)
                 logger.info(f"job_id={job_id} event=report_completed")
+
                 
     except Exception as e:
         raise AIEthicsException(e,sys)
